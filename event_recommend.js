@@ -2,8 +2,8 @@ const OpenAI = require("openai");
 const math = require('mathjs');
 const { Pinecone } = require("@pinecone-database/pinecone");
 
-let OPEN_API_KEY
-let PINECONE_API_KEY
+let OPEN_API_KEY = process.env.OPEN_API_KEY;
+let PINECONE_API_KEY = process.env.PINECONE_API_KEY
 
 const controller = async (req, res) => {
     QUERIES = ["Venue Name and Zip Code in California", "Basketball event", "Low Availibility"]
