@@ -79,9 +79,10 @@ const controller = async (req, res) => {
         // });
 
         const recommendedEvents = response.matches.map(match => {
+            const eventId = match.id;
             const text = match.metadata.text;
             const score = match.score;
-            return parseEvent(text, score);
+            return parseEvent(eventId, text, score);
           });
 
         // const output = { "recommendedEvents": recommendedEvents };

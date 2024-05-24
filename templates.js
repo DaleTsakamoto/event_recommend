@@ -47,9 +47,9 @@ events.forEach(event => {
 return {zipcodesQuery: createLocationQuery(zipcodes), daysOfWeekQuery: createDayQuery(daysOfWeek), activitiesQuery: createActivityQuery(activities), organizationsQuery: createOrganizationQuery(organizations), venuesQuery: createVenueQuery(venues), textQuery: body?.textQuery && body.textQuery.length > 0 ? body.textQuery : null}
 }
 
-function parseEvent(text, score) {
+function parseEvent(eventId, text, score) {
     const lines = text.split('\n');
-    const eventDetails = {};
+    const eventDetails = { eventId: Number(eventId) };
   
     lines.forEach(line => {
       if (line.startsWith("Event Date:")) {
