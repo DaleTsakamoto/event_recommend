@@ -2,13 +2,24 @@ const OpenAI = require("openai");
 const math = require('mathjs');
 const { Pinecone } = require("@pinecone-database/pinecone");
 
-let OPEN_API_KEY = process.env.OPEN_API_KEY;
-let PINECONE_API_KEY = process.env.PINECONE_API_KEY
+const {
+    createDataArrays,
+    parseEvent
+} = require("./templates")
+
+let OPEN_API_KEY = "sk-evengine-service-AmqsQYnCriT55BjyF3l3T3BlbkFJDKkpMO7GKFPhw5VhMfc5";
+// let OPEN_API_KEY = process.env.OPEN_API_KEY;
+let PINECONE_API_KEY = "90647a75-db12-4cbb-ab3b-0445a8db2c8d"
+// let PINECONE_API_KEY = process.env.PINECONE_API_KEY
 
 const controller = async (req, res) => {
-    QUERIES = ["Venue Name and Zip Code in California", "Basketball event", "Low Availibility"]
+    const {zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery} = createDataArrays(req.body?.pastEvents)
+    const createArrayFromQueries = (...queries) => queries.filter(Boolean);
+
+    QUERIES = createArrayFromQueries(zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery);
+    // console.log("QUERIES", QUERIES)
     AGGREGATION_METHOD = "WEIGHTED"
-    WEIGHTS = [0.05, 0.9, 0.05 ]
+    WEIGHTS = [0.25, 0.25, 0.2, 0.2, 0.1]
     MODEL = "text-embedding-3-large"
 
     try {
@@ -20,7 +31,7 @@ const controller = async (req, res) => {
         const client = new OpenAI({
           apiKey: OPEN_API_KEY,
         });
-        const indexName = "event-recommendation-index-large-cosine";
+        const indexName = "event-recommendation-index-70k";
 
             // Connect to the index
         async function connectToIndex() {
@@ -28,7 +39,7 @@ const controller = async (req, res) => {
             return index;
         }
 
-        console.log("Grabbing queries embedding from Open AI");
+        // console.log("Grabbing queries embedding from Open AI");
         let xq = await client.embeddings.create({input: QUERIES, model: MODEL});
         let queryVector
         if (QUERIES.length > 1) {
@@ -53,16 +64,28 @@ const controller = async (req, res) => {
         }
 
         const index = await connectToIndex();
-        let response = await index.query({vector: queryVector, topK: 10, includeMetadata: true});
+
+        let response = await index.query({vector: queryVector, topK: 5, includeMetadata: true});
+
         
-        console.log("\n---------------------MATCHES----------------------");
-        response.matches.forEach(match => {
-            // console.log("MATCH", match)
-            // console.log(`Similarity Score (${match.score.toFixed(2)}):\n${match.metadata.combined_text}\n`);
-            console.log(`Similarity Score (${match.score.toFixed(2)}):\n${match.metadata.text}\n`);
-            console.log("--------------------------------------------------\n");
-        });
-        res.json({ response: response });
+        // console.log("\n---------------------MATCHES----------------------");
+        // response.matches.forEach(match => {
+        //     // console.log("MATCH", match)
+        //     // console.log(`Similarity Score (${match.score.toFixed(2)}):\n${match.metadata.combined_text}\n`);
+        //     console.log(`Similarity Score (${match.score.toFixed(2)}):\n${match.metadata.text}\n`);
+        //     console.log("--------------------------------------------------\n");
+        // });
+
+        const recommendedEvents = response.matches.map(match => {
+            const text = match.metadata.text;
+            const score = match.score;
+            return parseEvent(text, score);
+          });
+
+        // const output = { "recommendedEvents": recommendedEvents };
+        
+        // console.log(JSON.stringify(output, null, 2));
+        res.json({ recommendedEvents });
         
     } catch (e) {
       console.log(e)
