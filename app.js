@@ -1,14 +1,12 @@
 const express = require("express");
+var cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3001;
 const {controller} = require("./event_recommend")
 
 app.use(express.json()); 
 
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  next();
-});
+app.use(cors());
 
 app.get("/", (req, res) => res.type('html').send(html));
 
