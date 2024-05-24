@@ -5,6 +5,11 @@ const {controller} = require("./event_recommend")
 
 app.use(express.json()); 
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 app.get("/", (req, res) => res.type('html').send(html));
 
 app.post("/event_recommend", controller)

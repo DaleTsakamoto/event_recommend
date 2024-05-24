@@ -13,13 +13,14 @@ let PINECONE_API_KEY = "90647a75-db12-4cbb-ab3b-0445a8db2c8d"
 // let PINECONE_API_KEY = process.env.PINECONE_API_KEY
 
 const controller = async (req, res) => {
-    const {zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery} = createDataArrays(req.body?.pastEvents)
+    const {zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery, textQuery} = createDataArrays(req.body)
     const createArrayFromQueries = (...queries) => queries.filter(Boolean);
 
-    QUERIES = createArrayFromQueries(zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery);
+    QUERIES = createArrayFromQueries(zipcodesQuery, daysOfWeekQuery, activitiesQuery, organizationsQuery, venuesQuery, textQuery);
     // console.log("QUERIES", QUERIES)
     AGGREGATION_METHOD = "WEIGHTED"
     WEIGHTS = [0.25, 0.25, 0.2, 0.2, 0.1]
+    WEIGHTSWITHUSERQUERY = [0.125, 0.125, 0.1, 0.1, 0.05, 0.5]
     MODEL = "text-embedding-3-large"
 
     try {
@@ -43,13 +44,14 @@ const controller = async (req, res) => {
         let xq = await client.embeddings.create({input: QUERIES, model: MODEL});
         let queryVector
         if (QUERIES.length > 1) {
-            console.log("Applying " + AGGREGATION_METHOD + " function to list of query embeddings...");
+            // console.log("Applying " + AGGREGATION_METHOD + " function to list of query embeddings...");
             let queryEmbeddingList = xq.data.map(record => record.embedding);
             let average_embedding;
             if (AGGREGATION_METHOD === "AVERAGE") {
                 average_embedding = math.mean(queryEmbeddingList, 0);
             } else if (AGGREGATION_METHOD === "WEIGHTED") {
-                let weightArray = WEIGHTS;
+                let weightArray = QUERIES.length > 5 ? WEIGHTSWITHUSERQUERY: WEIGHTS;
+                // console.log("WEIGHTARRYA", weightArray)
                 let sumWeights = math.sum(weightArray);
                 let normalized_weights = math.divide(weightArray, sumWeights);
                 // Reshape the normalized weights array to be a column vector

@@ -18,12 +18,14 @@ const createVenueQuery = (venues) => {
     return `I like attending events at these venues: ${venues.join(', ')}.`
 }
 
-const createDataArrays = (events) => {
+const createDataArrays = (body) => {
 const zipcodes = []
 const daysOfWeek = []
 const activities = []
 const organizations = []
 const venues = []
+
+let events = body?.pastEvents
 
 events.forEach(event => {
     if (event.zipcode){
@@ -42,7 +44,7 @@ events.forEach(event => {
         venues.push(event.venueName)
     }
 })
-return {zipcodesQuery: createLocationQuery(zipcodes), daysOfWeekQuery: createDayQuery(daysOfWeek), activitiesQuery: createActivityQuery(activities), organizationsQuery: createOrganizationQuery(organizations), venuesQuery: createVenueQuery(venues)}
+return {zipcodesQuery: createLocationQuery(zipcodes), daysOfWeekQuery: createDayQuery(daysOfWeek), activitiesQuery: createActivityQuery(activities), organizationsQuery: createOrganizationQuery(organizations), venuesQuery: createVenueQuery(venues), textQuery: body?.textQuery && body.textQuery.length > 0 ? body.textQuery : null}
 }
 
 function parseEvent(text, score) {
